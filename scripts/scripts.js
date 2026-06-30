@@ -106,8 +106,25 @@ const miloLibs = setLibs(LIBS);
 }());
 
 (async function loadPage() {
-  const { loadArea, setConfig } = await import(`${miloLibs}/utils/utils.js`);
+  const { loadArea, setConfig, loadStyle } = await import(`${miloLibs}/utils/utils.js`);
   const config = setConfig({ ...CONFIG, miloLibs });
   console.log(config);
+
+  //check again
+
+  // Fix: SharePoint parser pre-converts Section Metadata to classes,
+  // so we rescue them before loadArea wipes them, and force-load the CSS.
+  loadStyle(`${miloLibs}/blocks/section-metadata/section-metadata.css`);
+  document.querySelectorAll('main > div').forEach((div) => {
+    if (div.classList.length > 0) div.dataset.sectionClasses = [...div.classList].join(' ');
+  });
+
   await loadArea();
+
+  document.querySelectorAll('main > div.section').forEach((div) => {
+    if (div.dataset.sectionClasses) {
+      div.dataset.sectionClasses.split(' ').forEach((cls) => div.classList.add(cls));
+      delete div.dataset.sectionClasses;
+    }
+  });
 }());
